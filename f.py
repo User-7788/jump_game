@@ -9,12 +9,28 @@ size = width, height
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("jump game")
 
+# icon = pygame.image.load('data/icon.jpg')
+# pygame.display.set_icon(icon)
+
 B_GREEN = (139, 255, 182)
 B_GREEN_C = (89, 205, 132)
 B_CHOSEN = (183, 255, 1)
 SIMPLE = 'Simple'
 PIC = {}
-g = 9, 8
+g = 9.8
+
+
+def load_image(pic):
+    name = 'data' + '/' + pic
+    try:
+        if name[-2:] == 'jpg':
+            im = pygame.image.load(name).convert()
+        else:
+            im = pygame.image.load(name).convert_alpha()
+
+        return im
+    except Exception:
+        pass
 
 
 class Platform:
@@ -32,8 +48,12 @@ class Platform:
                                               self.w, self.h))
 
 
-'''class Ball:
-    def __init__(self, x, y, v=0):'''
+class Ball:
+    def __init__(self, x, y, vx=0, vy=0):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
 
 
 class Button:
@@ -84,6 +104,7 @@ class Button:
 
 
 is_menu = True
+is_paused = False
 is_end = False
 hard_level = 1
 
@@ -92,11 +113,12 @@ easy_b = Button(60, 270, 390, 60, color_1=B_CHOSEN, color_2=B_CHOSEN, txt_c=(50,
 norm_b = Button(60, 340, 390, 60, color_1=B_GREEN, color_2=B_GREEN_C, txt_c=(50, 50, 50))
 hard_b = Button(60, 410, 390, 60, color_1=B_GREEN, color_2=B_GREEN_C, txt_c=(50, 50, 50))
 menu_quit_b = Button(60, 490, 390, 100, color_1=(255, 102, 255), color_2=(215, 62, 215))
+pause_b = Button(5, 5, 50, 50, color_1=(141, 0, 255), color_2=(91, 0, 205))
+
+
+ball = Ball(200, 400)
 
 running = True
-
-# icon = pygame.image.load('data/icon.jpg')
-# pygame.display.set_icon(icon)
 
 # pic = pygame.image.load("data/экран.jpg")
 
@@ -112,7 +134,27 @@ while running:
 
 
 
-    elif is_menu:
+        if is_paused:
+            font = pygame.font.Font(None, 30)
+
+            s = pygame.Surface((width, height), pygame.SRCALPHA)
+            s.fill((0, 0, 0, 128))
+            screen.blit(s, (0, 0))
+
+            pause_b.draw('>', (20.5, 4), big=63)
+            screen.blit(font.render('|', 10, pause_b.txt_c), (20, 18.5))
+            screen.blit(font.render('|', 10, pause_b.txt_c), (19, 18.5))
+
+            pause_b.should_i_color(pos)
+
+
+        else:
+            pause_b.draw('| |', (15, 9.5), big=55)
+            pause_b.should_i_color(pos)
+
+
+
+    elif is_menu and not is_end:
         screen.fill((141, 0, 255))
 
         start_b.draw('START GAME', (117, 182), big=60)
@@ -176,4 +218,8 @@ while running:
 
                 elif start_b.is_cliced():
                     is_menu = False
+            if not is_menu and not is_end:
+                if pause_b.is_cliced():
+                    is_paused = not is_paused
+
 pygame.quit()
