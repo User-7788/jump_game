@@ -1,5 +1,7 @@
+import os
 import time
-from random import choice
+from PIL import Image, ImageDraw
+from random import randint
 
 import pygame
 
@@ -15,6 +17,10 @@ pygame.display.set_caption("jump game")
 # icon = pygame.image.load('data/icon.jpg')
 # pygame.display.set_icon(icon)
 
+fullname = os.path.join('sounds', 'song.mp3')
+pygame.mixer.music.load(fullname)
+pygame.mixer.music.play(-1)
+
 B_GREEN = (139, 255, 182)
 B_GREEN_C = (89, 205, 132)
 B_CHOSEN = (183, 255, 1)
@@ -26,10 +32,10 @@ fps = 60
 r_b_down = False
 l_b_down = False
 h = 110
-lis_x = [0, 100, 200, 300, 400]
 pl_v = 1
 platforms = []
 tim = 0
+start_v = -5
 
 
 def load_image(pic):
@@ -60,17 +66,25 @@ class Platform:
                                               self.w, self.h))
 
 
+def draw_game_flowers():
+    f = pygame.image.load("data/game_flower.png").convert_alpha()
+    for i in range(-1, 11):
+        if i % 2 == 0:
+            for j in range(10):
+                screen.blit(f, [(50 * i) + (2 * j) + 20, (70 * j)])
+
+
 def create_new(last):
     if last.y >= 650:
         platforms.remove(last)
-        platforms.append(Platform(choice(lis_x), 0))
+        platforms.append(Platform(randint(0, 400), 0))
 
 
 def is_on_platform(p):
     global vy, pic, tim
     if (y + pic.get_height() >= (p.y - (abs(vy) // 2))) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
             x + (pic.get_width() // 2) >= p.x) and (x + (pic.get_width() // 2) <= (p.x + p.w)) and (vy >= 0):
-        vy = -6
+        vy = start_v
         pic = pygame.image.load("data/down.png").convert_alpha()
         tim = 0
 
@@ -133,9 +147,10 @@ norm_b = Button(60, 340, 390, 60, color_1=B_GREEN, color_2=B_GREEN_C, txt_c=(50,
 hard_b = Button(60, 410, 390, 60, color_1=B_GREEN, color_2=B_GREEN_C, txt_c=(50, 50, 50))
 menu_quit_b = Button(60, 490, 390, 100, color_1=(255, 102, 255), color_2=(215, 62, 215))
 pause_b = Button(5, 5, 50, 50, color_1=(141, 0, 255), color_2=(91, 0, 205))
+restart_b = Button(60, 380, 390, 100, color_1=(255, 255, 255), color_2=(205, 205, 205))
 
 for i in range(1, 6):
-    p = Platform(choice(lis_x), 125 * i)
+    p = Platform(randint(0, 400), 125 * i)
     platforms.append(p)
 
 running = True
@@ -155,6 +170,7 @@ while running:
 
     if not is_menu and not is_end:
         screen.fill((133, 247, 215))
+        draw_game_flowers()
 
         if is_paused:
             font = pygame.font.Font(None, 30)
@@ -177,6 +193,10 @@ while running:
 
 
         else:
+            if y >= height:
+                is_end = True
+                menu_quit_b.color_1 = (133, 247, 215)
+                menu_quit_b.color_2 = (83, 197, 165)
             if tim >= 5:
                 pic = pygame.image.load("data/normal.png").convert_alpha()
             else:
@@ -203,7 +223,17 @@ while running:
             pause_b.draw('| |', (15, 9.5), big=55)
             pause_b.should_i_color(pos)
 
+    elif is_end and not is_menu:
+        screen.fill((255, 186, 0))
 
+        menu_quit_b.draw('QUIT', (213, 523), big=50)
+        menu_quit_b.should_i_color(pos)
+
+        restart_b.draw('RESTART', (174, 413), big=50)
+        restart_b.should_i_color(pos)
+
+        font = pygame.font.Font(None, 60)
+        screen.blit(font.render("GAME OVER", 1, (255, 255, 0)), (123, 100))
 
     elif is_menu and not is_end:
         screen.fill((141, 0, 255))
@@ -228,10 +258,18 @@ while running:
             running = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if is_menu:
-                if menu_quit_b.is_cliced():
-                    running = False
-                elif easy_b.is_cliced():
+            if menu_quit_b.is_cliced() and (is_end or is_menu):
+                running = False
+            elif is_end:
+                if restart_b.is_cliced():
+                    is_end = False
+                    x = width // 2
+                    y = 100
+                    vy = 0
+
+            elif is_menu:
+                if easy_b.is_cliced():
+                    pl_v = 1
                     hard_level = 1
 
                     easy_b.color_1 = B_CHOSEN
@@ -244,6 +282,10 @@ while running:
                     hard_b.color_2 = B_GREEN_C
 
                 elif norm_b.is_cliced():
+                    pl_v = 2
+                    start_v = -6.3
+                    g = 0.2
+                    vx = 5.15
                     hard_level = 2
 
                     norm_b.color_1 = B_CHOSEN
@@ -256,6 +298,10 @@ while running:
                     hard_b.color_2 = B_GREEN_C
 
                 elif hard_b.is_cliced():
+                    pl_v = 3
+                    start_v = -10.4
+                    g = 0.5
+                    vx = 9
                     hard_level = 3
 
                     hard_b.color_1 = B_CHOSEN
@@ -280,11 +326,9 @@ while running:
                 if pressed[pygame.K_SPACE]:
                     is_paused = not is_paused
                 if pressed[pygame.K_RIGHT]:
-                    x += vx
                     r_b_down = True
                     l_b_down = False
                 if pressed[pygame.K_LEFT]:
-                    x -= vx
                     l_b_down = True
                     r_b_down = False
 
