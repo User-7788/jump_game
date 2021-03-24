@@ -29,26 +29,24 @@ PIC = {}
 g = 0.1
 clock = pygame.time.Clock()
 fps = 60
+fon = True
 r_b_down = False
 l_b_down = False
 h = 110
 pl_v = 1
 platforms = []
-tim = 0
+tim = time.time()
 start_v = -5
+X = 0
+fon_tim = time.time()
+pomehi = []
+n_po = 0
+pom_tim = time.time()
 
-
-def load_image(pic):
-    name = 'data' + '/' + pic
-    try:
-        if name[-2:] == 'jpg':
-            im = pygame.image.load(name).convert()
-        else:
-            im = pygame.image.load(name).convert_alpha()
-
-        return im
-    except Exception:
-        pass
+for p in ["помехи/помехи1 (1).PNG", "помехи/помехи2 (1).PNG", "помехи/помехи3 (1).PNG", "помехи/помехи4 (1).PNG",
+          "помехи/помехи5 (1).PNG"]:
+    f = pygame.image.load(p).convert_alpha()
+    pomehi.append(f)
 
 
 class Platform:
@@ -59,19 +57,19 @@ class Platform:
         self.w = w
         self.h = h
         if typ == SIMPLE:
-            self.color = (0, 0, 205)
+            self.color = (69, 50, 46)
 
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x, self.y,
                                               self.w, self.h))
 
 
-def draw_game_flowers():
+'''def draw_game_flowers():
     f = pygame.image.load("data/game_flower.png").convert_alpha()
     for i in range(-1, 11):
         if i % 2 == 0:
             for j in range(10):
-                screen.blit(f, [(50 * i) + (2 * j) + 20, (70 * j)])
+                screen.blit(f, [(50 * i) + (2 * j) + 20, (70 * j)])'''
 
 
 def create_new(last):
@@ -81,12 +79,12 @@ def create_new(last):
 
 
 def is_on_platform(p):
-    global vy, pic, tim
-    if (y + pic.get_height() >= (p.y - (abs(vy) // 2))) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
+    global vy, pic, tim, tim1
+    if (y + pic.get_height() >= p.y) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
             x + (pic.get_width() // 2) >= p.x) and (x + (pic.get_width() // 2) <= (p.x + p.w)) and (vy >= 0):
         vy = start_v
         pic = pygame.image.load("data/down.png").convert_alpha()
-        tim = 0
+        tim = tim1
 
 
 class Button:
@@ -169,8 +167,19 @@ while running:
     pos = pygame.mouse.get_pos()
 
     if not is_menu and not is_end:
-        screen.fill((133, 247, 215))
-        draw_game_flowers()
+        screen.fill((0, 0, 255))
+        # (133, 247, 215) (5, 98, 168)
+        X += 1
+        fon_tim1 = time.time()
+        if (fon_tim1 - fon_tim) >= 0.3 and not is_paused:
+            fon = not fon
+            X = 0
+            fon_tim = fon_tim1
+        if fon:
+            f = pygame.image.load("data/11  (1).png").convert_alpha()
+        else:
+            f = pygame.image.load("data/22  (1).png").convert_alpha()
+        screen.blit(f, [0, 0])
 
         if is_paused:
             font = pygame.font.Font(None, 30)
@@ -197,10 +206,10 @@ while running:
                 is_end = True
                 menu_quit_b.color_1 = (133, 247, 215)
                 menu_quit_b.color_2 = (83, 197, 165)
-            if tim >= 5:
+            tim1 = time.time()
+            if (tim1 - tim) >= 0.1:
                 pic = pygame.image.load("data/normal.png").convert_alpha()
-            else:
-                tim += 1
+
             q = sorted(platforms, key=lambda x: x.y)[-1]
             create_new(q)
             for p in platforms:
@@ -222,6 +231,15 @@ while running:
 
             pause_b.draw('| |', (15, 9.5), big=55)
             pause_b.should_i_color(pos)
+
+        if not is_paused:
+            screen.blit(pomehi[n_po], [0, 0])
+            pom_tim1 = time.time()
+            if (pom_tim1 - pom_tim) >= 0.2:
+                n_po += 1
+                if n_po >= 5:
+                    n_po = 0
+                pom_tim = pom_tim1
 
     elif is_end and not is_menu:
         screen.fill((255, 186, 0))
