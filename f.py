@@ -33,6 +33,10 @@ V_PL = 5
 B_CHOSEN = (183, 255, 1)
 SIMPLE = 'Simple'
 MOVING = 'moving'
+is_500 = False
+t = 200
+k = 4
+t1 = 0
 PIC = {}
 g = 0.1
 clock = pygame.time.Clock()
@@ -41,6 +45,7 @@ fon = True
 r_b_down = False
 l_b_down = False
 h = 110
+check = True
 pl_v = 1
 platforms = []
 tim = time.time()
@@ -49,6 +54,8 @@ start_v = -5
 X = 0
 fon_tim = time.time()
 pomehi = []
+kyk_n = height // 5
+w = False
 n_po = 0
 pom_tim = time.time()
 platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
@@ -96,7 +103,7 @@ def create_new(last):
 
 
 def is_on_platform(p):
-    global vy, pic, tim, tim1, last_platform, score
+    global vy, pic, tim, tim1, last_platform, score, check
     if (y + pic.get_height() >= p.y) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
             x + (pic.get_width() // 2) >= p.x) and (x + (pic.get_width() // 2) <= (p.x + p.w)) and (vy >= 0):
         vy = start_v
@@ -106,6 +113,7 @@ def is_on_platform(p):
         if p != last_platform:
             last_platform = p
             score += 10
+            check = True
 
 
 class Button:
@@ -191,9 +199,13 @@ while running:
     if not is_menu and not is_end:
         screen.fill((0, 0, 255))
 
+        if score % 250 == 0 and score != 0 and check:
+            is_500 = True
+
+
         X += 1
         fon_tim1 = time.time()
-        if (fon_tim1 - fon_tim) >= 0.3 and not is_paused:
+        if (fon_tim1 - fon_tim) >= 0.3 and not is_paused and not is_500:
             fon = not fon
             X = 0
             fon_tim = fon_tim1
@@ -222,6 +234,32 @@ while running:
 
             pause_b.should_i_color(pos)
 
+        elif is_500:
+            for p in platforms:
+                p.draw()
+
+            screen.blit(pic, [x, y])
+
+            f = pygame.image.load("data/кукуруза.png").convert_alpha()
+            screen.blit(f, [0, 0 + (kyk_n * 5)])
+            kyk_n -= k
+            t1 = time.time()
+
+            font = pygame.font.Font(None, 70)
+            screen.blit(font.render("!!! " + str(score) + " !!!", 1,
+                                    (105, 0, 105)), ((width // 2) - ((8 + len(str(score))) * 13) // 2, 270))
+
+            if kyk_n <= 12 and k != 0:
+                t = time.time()
+                k = 0
+                w = True
+
+            if t1 - t >= 2 and w:
+                is_500 = False
+                w = False
+                k = 4
+                kyk_n = height // 5
+                check = False
 
         else:
             if y >= height:
@@ -270,7 +308,6 @@ while running:
                 pom_tim = pom_tim1
 
     elif is_end and not is_menu:
-        screen.fill((255, 228, 0))
         f = pygame.image.load("data/end_fon.jpg").convert_alpha()
         screen.blit(f, [0, 0])
 
@@ -383,7 +420,7 @@ while running:
 
                 elif start_b.is_cliced():
                     is_menu = False
-            if not is_menu and not is_end:
+            if not is_menu and not is_end and not is_500:
                 if pause_b.is_cliced():
                     is_paused = not is_paused
 
