@@ -36,8 +36,6 @@ MOVING = 'moving'
 is_500 = False
 t = 200
 k = 4
-t1 = 0
-PIC = {}
 g = 0.1
 clock = pygame.time.Clock()
 fps = 60
@@ -58,7 +56,7 @@ kyk_n = height // 5
 w = False
 n_po = 0
 pom_tim = time.time()
-platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
+platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE}
 
 for p in ["помехи/помехи1 (1).PNG", "помехи/помехи2 (1).PNG", "помехи/помехи3 (1).PNG", "помехи/помехи4 (1).PNG",
           "помехи/помехи5 (1).PNG"]:
@@ -103,12 +101,12 @@ def create_new(last):
 
 
 def is_on_platform(p):
-    global vy, pic, tim, tim1, last_platform, score, check
+    global vy, pic, tim, time_now, last_platform, score, check
     if (y + pic.get_height() >= p.y) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
             x + (pic.get_width() // 2) >= p.x) and (x + (pic.get_width() // 2) <= (p.x + p.w)) and (vy >= 0):
         vy = start_v
         pic = pygame.image.load("data/down.png").convert_alpha()
-        tim = tim1
+        tim = time_now
 
         if p != last_platform:
             last_platform = p
@@ -193,22 +191,21 @@ while running:
     pygame.display.flip()
     clock.tick(fps)
     screen.fill((0, 0, 0))
+    time_now = time.time()
 
     pos = pygame.mouse.get_pos()
 
     if not is_menu and not is_end:
         screen.fill((0, 0, 255))
 
-        if score % 250 == 0 and score != 0 and check:
+        if score % 200 == 0 and score != 0 and check:
             is_500 = True
 
-
         X += 1
-        fon_tim1 = time.time()
-        if (fon_tim1 - fon_tim) >= 0.3 and not is_paused and not is_500:
+        if (time_now - fon_tim) >= 0.3 and not is_paused and not is_500:
             fon = not fon
             X = 0
-            fon_tim = fon_tim1
+            fon_tim = time_now
         if fon:
             f = pygame.image.load("data/11  (1).png").convert_alpha()
         else:
@@ -243,18 +240,20 @@ while running:
             f = pygame.image.load("data/кукуруза.png").convert_alpha()
             screen.blit(f, [0, 0 + (kyk_n * 5)])
             kyk_n -= k
-            t1 = time.time()
 
             font = pygame.font.Font(None, 70)
-            screen.blit(font.render("!!! " + str(score) + " !!!", 1,
-                                    (105, 0, 105)), ((width // 2) - ((8 + len(str(score))) * 13) // 2, 270))
+            text = font.render("!!! " + str(score) + " !!!", True, (105, 0, 105))
+            text_rect = text.get_rect(center=(width / 2,  270))
+            screen.blit(text, text_rect)
+            '''screen.blit(font.render("!!! " + str(score) + " !!!", 1,
+                                    (105, 0, 105)), ((width // 2) - ((8 + len(str(score))) * 13) // 2, 270))'''
 
             if kyk_n <= 12 and k != 0:
                 t = time.time()
                 k = 0
                 w = True
 
-            if t1 - t >= 2 and w:
+            if time_now - t >= 2 and w:
                 is_500 = False
                 w = False
                 k = 4
@@ -264,8 +263,7 @@ while running:
         else:
             if y >= height:
                 is_end = True
-            tim1 = time.time()
-            if (tim1 - tim) >= 0.1:
+            if (time_now - tim) >= 0.1:
                 pic = pygame.image.load("data/normal.png").convert_alpha()
 
             q = sorted(platforms, key=lambda x: x.y)[-1]
@@ -300,12 +298,11 @@ while running:
 
         if not is_paused:
             screen.blit(pomehi[n_po], [0, 0])
-            pom_tim1 = time.time()
-            if (pom_tim1 - pom_tim) >= 0.2:
+            if (time_now - pom_tim) >= 0.2:
                 n_po += 1
                 if n_po >= 5:
                     n_po = 0
-                pom_tim = pom_tim1
+                pom_tim = time_now
 
     elif is_end and not is_menu:
         f = pygame.image.load("data/end_fon.jpg").convert_alpha()
@@ -371,7 +368,7 @@ while running:
                     g = 0.1
                     V_PL = 5
                     vx = 4
-                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
+                    platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE}
 
                     easy_b.color_1 = B_CHOSEN
                     easy_b.color_2 = B_CHOSEN
@@ -389,7 +386,7 @@ while running:
                     g = 0.2
                     vx = 5.15
                     hard_level = 2
-                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING]
+                    platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING}
 
                     norm_b.color_1 = B_CHOSEN
                     norm_b.color_2 = B_CHOSEN
@@ -407,7 +404,7 @@ while running:
                     vx = 9
                     V_PL = 2
                     hard_level = 3
-                    platform_type = [MOVING, MOVING, MOVING, SIMPLE]
+                    platform_type = {MOVING, MOVING, MOVING, SIMPLE}
 
                     hard_b.color_1 = B_CHOSEN
                     hard_b.color_2 = B_CHOSEN
