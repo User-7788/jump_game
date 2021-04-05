@@ -1,7 +1,8 @@
+#!/usr/bin/env pypy
+
 import os
 import random
 import time
-from PIL import Image, ImageDraw
 from random import randint
 
 import pygame
@@ -13,21 +14,21 @@ height = 650
 size = width, height
 
 screen = pygame.display.set_mode(size)
-pygame.display.set_caption("jump game")
+pygame.display.set_caption("eye jump game")
 
-# icon = pygame.image.load('data/icon.jpg')
-# pygame.display.set_icon(icon)
+icon = pygame.image.load('data/normal.png')
+pygame.display.set_icon(icon)
 
-fullname = os.path.join('sounds', 'song.mp3')
+fullname = os.path.join('sounds', 'audio1.mp3')
 pygame.mixer.music.load(fullname)
 pygame.mixer.music.play(-1)
 
 f = open("score.txt", mode="r")
-best_res = int(f.read())
+content = f.readlines()
+scores = [int(x.strip()) for x in content]
 f.close()
 
 B_GREEN = (139, 255, 182)
-last_platform = -1
 B_GREEN_C = (89, 205, 132)
 V_PL = 5
 B_CHOSEN = (183, 255, 1)
@@ -56,7 +57,7 @@ kyk_n = height // 5
 w = False
 n_po = 0
 pom_tim = time.time()
-platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE}
+platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
 
 for p in ["помехи/помехи1 (1).PNG", "помехи/помехи2 (1).PNG", "помехи/помехи3 (1).PNG", "помехи/помехи4 (1).PNG",
           "помехи/помехи5 (1).PNG"]:
@@ -77,6 +78,7 @@ class Platform:
         elif typ == MOVING:
             self.color = (255, 255, 255)
             self.v = V_PL
+        self.jumped = False
 
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x, self.y,
@@ -101,15 +103,15 @@ def create_new(last):
 
 
 def is_on_platform(p):
-    global vy, pic, tim, time_now, last_platform, score, check
+    global vy, pic, tim, time_now, score, check
     if (y + pic.get_height() >= p.y) and (y + pic.get_height() <= p.y + p.h + (abs(vy) // 2)) and (
             x + (pic.get_width() // 2) >= p.x) and (x + (pic.get_width() // 2) <= (p.x + p.w)) and (vy >= 0):
         vy = start_v
         pic = pygame.image.load("data/down.png").convert_alpha()
         tim = time_now
 
-        if p != last_platform:
-            last_platform = p
+        if not p.jumped:
+            p.jumped = True
             score += 10
             check = True
 
@@ -164,7 +166,7 @@ class Button:
 is_menu = True
 is_paused = False
 is_end = False
-hard_level = 1
+hard_level = 0
 
 start_b = Button(60, 150, 390, 100, color_1=(193, 84, 193), color_2=(143, 34, 143))
 easy_b = Button(60, 270, 390, 60, color_1=B_CHOSEN, color_2=B_CHOSEN, txt_c=(50, 50, 50))
@@ -173,7 +175,7 @@ hard_b = Button(60, 410, 390, 60, color_1=B_GREEN, color_2=B_GREEN_C, txt_c=(50,
 menu_quit_b = Button(60, 490, 390, 100, color_1=(255, 102, 255), color_2=(215, 62, 215))
 pause_b = Button(5, 5, 50, 50, color_1=(141, 0, 255), color_2=(91, 0, 205))
 restart_b = Button(60, 500, 390, 50, color_1=(255, 255, 255), color_2=(205, 205, 205))
-end_quit_b = Button(60, 560, 390, 50, color_1=(133, 247, 215), color_2=(83, 197, 165))
+go_menu_b = Button(60, 560, 390, 50, color_1=(133, 247, 215), color_2=(83, 197, 165))
 
 for i in range(1, 6):
     p = Platform(randint(0, 400), 125 * i)
@@ -243,7 +245,7 @@ while running:
 
             font = pygame.font.Font(None, 70)
             text = font.render("!!! " + str(score) + " !!!", True, (105, 0, 105))
-            text_rect = text.get_rect(center=(width / 2,  270))
+            text_rect = text.get_rect(center=(width / 2, 270))
             screen.blit(text, text_rect)
             '''screen.blit(font.render("!!! " + str(score) + " !!!", 1,
                                     (105, 0, 105)), ((width // 2) - ((8 + len(str(score))) * 13) // 2, 270))'''
@@ -308,15 +310,14 @@ while running:
         f = pygame.image.load("data/end_fon.jpg").convert_alpha()
         screen.blit(f, [0, 0])
 
-        best_res = max(best_res, score)
-
+        scores[hard_level] = max(scores[hard_level], score)
         pygame.draw.rect(screen, (255, 10, 0), (0, 160, width, 70))
 
         font = pygame.font.Font(None, 40)
         screen.blit(font.render("YOUR SCORE: " + str(score), 1, (0, 255, 255)), (123, 170))
-        screen.blit(font.render("BEST SCORE: " + str(best_res), 1, (0, 255, 255)), (126, 195))
+        screen.blit(font.render("BEST SCORE: " + str(scores[hard_level]), 1, (0, 255, 255)), (126, 195))
 
-        end_quit_b.draw('QUIT', (213, 568), big=50)
+        go_menu_b.draw('MENU', (208, 568), big=50)
         menu_quit_b.should_i_color(pos)
 
         restart_b.draw('RESTART', (177, 507), big=50)
@@ -327,6 +328,17 @@ while running:
 
     elif is_menu and not is_end:
         screen.fill((141, 0, 255))
+
+        f = pygame.image.load("data/кукуруза.png").convert_alpha()
+        screen.blit(f, [0, 0])
+        s = pygame.Surface((width, height), pygame.SRCALPHA)
+        s.fill((141, 0, 255, 128))
+        screen.blit(s, (0, 0))
+
+        pygame.draw.rect(screen, (255, 255, 255), (0, 50, width, 80))
+
+        f = pygame.image.load("data/name 1.PNG").convert_alpha()
+        screen.blit(f, [63, 50])
 
         start_b.draw('START GAME', (117, 182), big=60)
         start_b.should_i_color(pos)
@@ -350,25 +362,29 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if menu_quit_b.is_cliced() and is_menu:
                 running = False
-            elif end_quit_b.is_cliced() and is_end:
-                running = False
 
             elif is_end:
-                if restart_b.is_cliced():
+                if restart_b.is_cliced() or go_menu_b.is_cliced():
                     is_end = False
                     x = width // 2
                     y = 100
                     vy = 0
                     score = 0
+                    for i in platforms:
+                        i.jumped = False
+                    if go_menu_b.is_cliced():
+                        is_end = False
+                        is_menu = True
 
             elif is_menu:
                 if easy_b.is_cliced():
                     pl_v = 1
-                    hard_level = 1
+                    start_v = -1 * 5
+                    hard_level = 0
                     g = 0.1
                     V_PL = 5
                     vx = 4
-                    platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE}
+                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
 
                     easy_b.color_1 = B_CHOSEN
                     easy_b.color_2 = B_CHOSEN
@@ -385,8 +401,8 @@ while running:
                     V_PL = 5
                     g = 0.2
                     vx = 5.15
-                    hard_level = 2
-                    platform_type = {SIMPLE, SIMPLE, SIMPLE, MOVING}
+                    hard_level = 1
+                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING]
 
                     norm_b.color_1 = B_CHOSEN
                     norm_b.color_2 = B_CHOSEN
@@ -403,8 +419,8 @@ while running:
                     g = 0.5
                     vx = 9
                     V_PL = 2
-                    hard_level = 3
-                    platform_type = {MOVING, MOVING, MOVING, SIMPLE}
+                    hard_level = 2
+                    platform_type = [MOVING, MOVING, MOVING, SIMPLE]
 
                     hard_b.color_1 = B_CHOSEN
                     hard_b.color_2 = B_CHOSEN
@@ -442,7 +458,7 @@ while running:
                     r_b_down = False
 
 f = open("score.txt", mode="w")
-f.write(str(best_res))
+f.write('\n'.join(str(i) for i in scores))
 f.close()
 
 pygame.quit()
