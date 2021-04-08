@@ -32,8 +32,10 @@ B_GREEN = (139, 255, 182)
 B_GREEN_C = (89, 205, 132)
 V_PL = 5
 B_CHOSEN = (183, 255, 1)
-SIMPLE = 'Simple'
+SIMPLE = 'simple'
+br_t = 2
 MOVING = 'moving'
+TWO = "two"
 is_500 = False
 t = 200
 k = 4
@@ -57,7 +59,8 @@ kyk_n = height // 5
 w = False
 n_po = 0
 pom_tim = time.time()
-platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
+platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, TWO, SIMPLE]
+live = 3
 
 for p in ["помехи/помехи1 (1).PNG", "помехи/помехи2 (1).PNG", "помехи/помехи3 (1).PNG", "помехи/помехи4 (1).PNG",
           "помехи/помехи5 (1).PNG"]:
@@ -78,6 +81,12 @@ class Platform:
         elif typ == MOVING:
             self.color = (255, 255, 255)
             self.v = V_PL
+        elif typ == TWO:
+            self.color = (255, 0, 0)
+            self.v = 0
+            self.t = time.time()
+            self.x1 = self.x
+            self.x2 = randint(0, 400)
         self.jumped = False
 
     def draw(self):
@@ -215,18 +224,22 @@ while running:
         screen.blit(f, [0, 0])
 
         if is_paused:
-            font = pygame.font.Font(None, 30)
-
             s = pygame.Surface((width, height), pygame.SRCALPHA)
             s.fill((0, 0, 0, 128))
 
             for p in platforms:
                 p.draw()
+            for i in range(live):
+                pygame.draw.rect(screen, (255, 255, 0), (15, 70 + (30 * i), 5, 5))
+
+            font = pygame.font.Font(None, 32)
+            screen.blit(font.render(str(score), 1, (0, 0, 0)), (405, 10))
 
             screen.blit(pic, [x, y])
 
             screen.blit(s, (0, 0))
 
+            font = pygame.font.Font(None, 30)
             pause_b.draw('>', (20.5, 4), big=63)
             screen.blit(font.render('|', 10, pause_b.txt_c), (20, 18.5))
             screen.blit(font.render('|', 10, pause_b.txt_c), (19, 18.5))
@@ -236,6 +249,8 @@ while running:
         elif is_500:
             for p in platforms:
                 p.draw()
+            for i in range(live):
+                pygame.draw.rect(screen, (255, 255, 0), (15, 70 + (30 * i), 5, 5))
 
             screen.blit(pic, [x, y])
 
@@ -264,7 +279,14 @@ while running:
 
         else:
             if y >= height:
+                live -= 1
+                x = width // 2
+                y = 100
+                vy = 0
+
+            if live <= -1:
                 is_end = True
+
             if (time_now - tim) >= 0.1:
                 pic = pygame.image.load("data/normal.png").convert_alpha()
 
@@ -279,6 +301,16 @@ while running:
                     p.x += p.v
                     if p.x + p.w >= width or p.x <= 0:
                         p.v = -1 * p.v
+                elif p.typ == TWO:
+                    if time_now - p.t >= br_t:
+                        if p.x != p.x1:
+                            p.x = p.x1
+                        else:
+                            p.x = p.x2
+                        p.t = time.time()
+
+            for i in range(live):
+                pygame.draw.rect(screen, (255, 255, 0), (15, 70 + (30 * i), 5, 5))
 
             screen.blit(pic, [x, y])
 
@@ -370,6 +402,7 @@ while running:
                     y = 100
                     vy = 0
                     score = 0
+                    live = 3
                     for i in platforms:
                         i.jumped = False
                     if go_menu_b.is_cliced():
@@ -384,7 +417,7 @@ while running:
                     g = 0.1
                     V_PL = 5
                     vx = 4
-                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, SIMPLE, SIMPLE]
+                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, TWO, SIMPLE]
 
                     easy_b.color_1 = B_CHOSEN
                     easy_b.color_2 = B_CHOSEN
@@ -402,7 +435,7 @@ while running:
                     g = 0.2
                     vx = 5.15
                     hard_level = 1
-                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING]
+                    platform_type = [SIMPLE, SIMPLE, SIMPLE, MOVING, TWO]
 
                     norm_b.color_1 = B_CHOSEN
                     norm_b.color_2 = B_CHOSEN
@@ -420,7 +453,7 @@ while running:
                     vx = 9
                     V_PL = 2
                     hard_level = 2
-                    platform_type = [MOVING, MOVING, MOVING, SIMPLE]
+                    platform_type = [MOVING, MOVING, MOVING, SIMPLE, TWO, TWO]
 
                     hard_b.color_1 = B_CHOSEN
                     hard_b.color_2 = B_CHOSEN
